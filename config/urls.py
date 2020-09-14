@@ -21,5 +21,5 @@ API_VERSION = 'v1/api'
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path(f'{API_VERSION}/auth/', include('apps.users.api.urls')),
+    path(f'{API_VERSION}/auth/', include('apps.accounts.api.urls')),
 ]

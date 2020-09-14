@@ -52,9 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
-    'knox',
-
-    'apps.users'
+    # 'knox',
+    'apps.accounts'
 ]
 
 MIDDLEWARE = [
@@ -68,6 +67,9 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'config.urls'
+
+AUTH_USER_MODEL = 'accounts.User'
+
 
 TEMPLATES = [
     {
@@ -103,29 +105,29 @@ else:
     }
 
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
-        'knox.auth.TokenAuthentication',
-    ],
+# REST_FRAMEWORK = {
+#     'DEFAULT_AUTHENTICATION_CLASSES': [
+#         'rest_framework.authentication.BasicAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#         'rest_framework.authentication.TokenAuthentication',
+#         'knox.auth.TokenAuthentication',
+#     ],
 
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-        # 'knox.auth.TokenAuthentication'
-    ]
-}
+#     'DEFAULT_PERMISSION_CLASSES': [
+#         'rest_framework.permissions.IsAuthenticated',
+#         # 'knox.auth.TokenAuthentication'
+#     ]
+# }
 
-REST_KNOX = {
-    'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
-    'AUTH_TOKEN_CHARACTER_LENGTH': 64,
-    'TOKEN_TTL': timedelta(hours=10),
-    'USER_SERIALIZER': 'knox.serializers.UserSerializer',
-    'TOKEN_LIMIT_PER_USER': None,
-    'AUTO_REFRESH': False,
-    'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
-}
+# REST_KNOX = {
+#     'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
+#     'AUTH_TOKEN_CHARACTER_LENGTH': 64,
+#     'TOKEN_TTL': timedelta(hours=10),
+#     'USER_SERIALIZER': 'knox.serializers.UserSerializer',
+#     'TOKEN_LIMIT_PER_USER': None,
+#     'AUTO_REFRESH': False,
+#     'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
+# }
 
 
 # Password validation

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 
 
 @api_view(['GET'])
-def API_OVERVIEW(request):
+def api_overview(request):
     auth_urls = {
         "Login": '/v1/auth/login',
         "Logout": '/v1/auth/logout',
