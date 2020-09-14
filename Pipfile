@@ -7,7 +7,8 @@ name = "pypi"
 djangorestframework = "*"
 dj-database-url = "*"
 django-rest-knox = "*"
-django = "*"
+Django = "*"
+pyjwt = "*"
 
 [dev-packages]
 

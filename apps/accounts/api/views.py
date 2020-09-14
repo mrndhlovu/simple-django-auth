@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate
+from django.conf import settings
 
 from rest_framework import status, permissions
 from rest_framework.authentication import TokenAuthentication
@@ -10,6 +11,7 @@ from rest_framework.decorators import api_view, permission_classes, authenticati
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+import jwt
 
 from .serializers import(
     LoginSerializer, RegistrationSerializer, UpdateUserSerializer, ChangePasswordSerializer)
@@ -87,19 +89,23 @@ def log_api_view(request):
     email = request.data['username']
     password = request.data['password']
     user = authenticate(email=email, password=password)
+    print("user", user)
     context = {}
     if user:
         try:
-            token = Token.objects.get(user=user)
+            token = Token.objects.get(user=user).key
         except Token.DoesNotExist:
-            token = Token.objects.create(user=user)
+            token = Token.objects.create(user=user).key
+
+        # auth_token = jwt.encode({'email': user.email},
+        #                         settings.JWT_SECRET_KEY, algorithm='HS256')
         context['email'] = email.lower()
         context['full_name'] = user.full_name
-        context['token'] = token.key
+        context['token'] = token
         return Response(context)
     else:
         context['message'] = 'Invalid credentials'
-        return Response(context, status=status.HTTP_400_BAD_REQUEST)
+        return Response(data=context, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['PUT', ])

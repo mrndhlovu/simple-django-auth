@@ -113,21 +113,12 @@ else:
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
+        # 'apps.accounts.backends.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ]
 }
-
-# REST_KNOX = {
-#     'SECURE_HASH_ALGORITHM': 'cryptography.hazmat.primitives.hashes.SHA512',
-#     'AUTH_TOKEN_CHARACTER_LENGTH': 64,
-#     'TOKEN_TTL': timedelta(hours=10),
-#     'USER_SERIALIZER': 'knox.serializers.UserSerializer',
-#     'TOKEN_LIMIT_PER_USER': None,
-#     'AUTO_REFRESH': False,
-#     'EXPIRY_DATETIME_FORMAT': api_settings.DATETIME_FORMAT,
-# }
 
 
 # Password validation
@@ -167,3 +158,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
