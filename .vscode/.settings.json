@@ -1,7 +1,0 @@
-{
-  "python.pythonPath": "/usr/bin/python3",
-  "editor.tabSize": 4,
-  "python.linting.enable": true,
-  "python.linting.autopep8": false,
-  "python.linting.flake8Enable": true
-}
