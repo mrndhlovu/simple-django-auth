@@ -16,7 +16,6 @@ class UserManager(BaseUserManager):
             raise ValueError('Users must have a full name')
         user = self.model(
             email=self.normalize_email(email),
-            # full_name=full_name
         )
         user.set_password(password)
         user.staff = is_staff

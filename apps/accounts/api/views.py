@@ -1,21 +1,21 @@
-from django.shortcuts import render, get_object_or_404
-from django.http import JsonResponse
-from django.contrib.auth import authenticate
-from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import authenticate, get_user_model
 
-from rest_framework import status, permissions
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-import jwt
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 from .serializers import(
-    LoginSerializer, RegistrationSerializer, UpdateUserSerializer, ChangePasswordSerializer)
-from ..models import User
+    RegistrationSerializer,
+    UpdateUserSerializer,
+    ChangePasswordSerializer
+)
+
+User = get_user_model()
 
 
 def validate_email(email):
@@ -26,6 +26,18 @@ def validate_email(email):
         return None
     if user != None:
         return email
+
+
+def get_user_with_tokens(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'user': {
+            'full_name': user.full_name,
+            'email': user.email,
+        },
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 
 @api_view(['GET', ])
@@ -50,9 +62,7 @@ def user_api_view(request):
     try:
         user = request.user
     except:
-        data = {
-            'message': f'User not found',
-        }
+        data = {'message': f'User not found'}
         return Response(status=status.HTTP_404_NOT_FOUND, data=data)
     serializer = UpdateUserSerializer(user)
 
@@ -63,9 +73,9 @@ def user_api_view(request):
 @permission_classes(())
 def registration_api_view(request):
 
-    data = {}
     email = request.data['email']
     if validate_email(email) != None:
+        data = {}
         data['message'] = 'That email is already in use.'
         return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
@@ -73,10 +83,7 @@ def registration_api_view(request):
 
     if serializer.is_valid():
         user = serializer.save()
-        data['email'] = user.email.lower()
-        data['full_name'] = user.full_name
-        token = Token.objects.get(user=user).key
-        data['token'] = token
+        data = get_user_with_tokens(user)
         return Response(data)
     else:
         data = serializer.errors
@@ -86,30 +93,21 @@ def registration_api_view(request):
 @api_view(['POST', ])
 @permission_classes(())
 def log_api_view(request):
-    email = request.data['username']
-    password = request.data['password']
-    user = authenticate(email=email, password=password)
-    print("user", user)
-    context = {}
+
+    user = authenticate(
+        email=request.data['email'].lower(),
+        password=request.data['password']
+    )
     if user:
-        try:
-            token = Token.objects.get(user=user).key
-        except Token.DoesNotExist:
-            token = Token.objects.create(user=user).key
-
-        # auth_token = jwt.encode({'email': user.email},
-        #                         settings.JWT_SECRET_KEY, algorithm='HS256')
-        context['email'] = email.lower()
-        context['full_name'] = user.full_name
-        context['token'] = token
-        return Response(context)
+        data = get_user_with_tokens(user)
+        return Response(data=data,)
     else:
-        context['message'] = 'Invalid credentials'
-        return Response(data=context, status=status.HTTP_400_BAD_REQUEST)
+        data = {'message': 'Invalid credentials'}
+        return Response(data=data, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['PUT', ])
-@permission_classes((IsAuthenticated,))
+@ api_view(['PUT', ])
+@ permission_classes((IsAuthenticated,))
 def update_api_view(request):
     data = request.data
     context = {}
@@ -117,7 +115,8 @@ def update_api_view(request):
         user = request.user
         serializer = UpdateUserSerializer(user, data=data)
     except:
-        return Response(status=status.HTTP_404_NOT_FOUND, data={'message': 'Account not found.'})
+        data = {'message': 'Account not found.'}
+        return Response(status=status.HTTP_404_NOT_FOUND, data=data)
 
     if serializer.is_valid():
         serializer.save()
@@ -139,8 +138,7 @@ def verify_account_api_view(request):
             "exists": False
         }
         return Response(status=status.HTTP_404_NOT_FOUND, data=data)
-    if existing_user:
-        return Response(status=status.HTTP_200_OK)
+    return Response(status=status.HTTP_200_OK)
 
 
 @ api_view(['DELETE', ])
@@ -163,7 +161,6 @@ class UpdatePasswordAPIView(UpdateAPIView):
     serializer_class = ChangePasswordSerializer
     model = User
     permission_classes = (IsAuthenticated,)
-    authentication_classes = (TokenAuthentication,)
 
     def get_object(self, queryset=None):
         obj = self.request.user
@@ -180,10 +177,10 @@ class UpdatePasswordAPIView(UpdateAPIView):
 
             new_password = serializer.data.get('new_password')
             confirm_new_password = serializer.data.get('confirm_new_password')
-            print("confirm_new_password", confirm_new_password)
 
             if new_password != confirm_new_password:
-                return Response(status=status.HTTP_404_NOT_FOUND, data={'message': 'New passwords must match.'})
+                data = {'message': 'New passwords must match.'}
+                return Response(status=status.HTTP_404_NOT_FOUND, data=data)
 
             self.object.set_password(
                 serializer.data.get('confirm_new_password'))
