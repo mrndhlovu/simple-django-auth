@@ -1,9 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.conf import settings
-
-import jwt
-from rest_framework import authentication, exceptions
+from django.core.mail import EmailMessage, send_mail
 
 
 class CaseInsensitiveModelBackend(ModelBackend):
@@ -22,22 +20,10 @@ class CaseInsensitiveModelBackend(ModelBackend):
                 return user
 
 
-# class JWTAuthentication(authentication.BaseAuthentication):
-#     def authenticate(self, request):
-#         auth_data = authentication.get_authorization_header(request)
+class Util:
+    @staticmethod
+    def send_email(data):
+        email = EmailMessage(
+            subject=data['email_subject'], body=data['email_body'], to=[data['to_email']])
 
-#         if not auth_data:
-#             return None
-
-#         prefix, token = auth_data.decode('utf-8').split(' ')
-
-#         try:
-#             payload = jwt.decode(
-#                 token, settings.JWT_SECRET_KEY, algorithm='HS256')
-#             user = User.objects.get(email=payload['email'])
-#             return (user, token)
-#         except jwt.DecodeError:
-#             raise exceptions.AuthenticationFailed('Token in invalid')
-#         except jwt.ExpiredSignatureError:
-#             raise exceptions.AuthenticationFailed(
-#                 'Token provided has expired.')
+        email.send()

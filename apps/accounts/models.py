@@ -1,13 +1,16 @@
 from django.db import models
 from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager)
-from django.conf import settings
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from rest_framework.authtoken.models import Token
+from django.urls import reverse
+from django.utils.encoding import smart_str, force_str, DjangoUnicodeDecodeError, smart_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.contrib.sites.shortcuts import get_current_site
+
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, email, full_name, password=None, is_active=True, is_staff=False, is_admin=False):
+    def create_user(self, email, full_name, password=None, is_active=True, is_staff=False, is_admin=False, is_verified=False):
         if not email:
             raise ValueError('Users must have an email address')
         if not password:
@@ -22,7 +25,9 @@ class UserManager(BaseUserManager):
         user.full_name = full_name
         user.admin = is_admin
         user.active = is_active
+        user.is_verified = is_verified
         user.save(using=self._db)
+
         return user
 
     def create_staffuser(self, email, full_name, password):
@@ -30,7 +35,9 @@ class UserManager(BaseUserManager):
             email, full_name, password=password,
         )
         user.staff = True
+        user.is_verified = True
         user.save(using=self._db)
+
         return user
 
     def create_superuser(self, email, full_name, password=None):
@@ -40,6 +47,7 @@ class UserManager(BaseUserManager):
         user.admin = True
         user.staff = True
         user.confirmed = True
+        user.is_verified = True
         user.save(using=self._db)
         return user
 
@@ -91,8 +99,17 @@ class User (AbstractBaseUser):
     def is_active(self):
         return self.active
 
+    def with_auth_tokens(self):
+        refresh = RefreshToken.for_user(self)
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
+        return {
+            'user': {
+                'full_name': self.full_name,
+                'email': self.email,
+                'confirmed': self.confirmed,
+            },
+            'tokens': {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            }
+        }
